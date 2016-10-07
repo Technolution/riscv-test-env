@@ -156,7 +156,16 @@ void handle_trap(trapframe_t* tf)
     assert(tf->epc % 4 == 0);
 
     int* fssr;
+
+#ifdef __riscv_hard_float
     asm ("jal %0, 1f; fssr x0; 1:" : "=r"(fssr));
+#else
+    /* there shouldn't be any float instructions when __riscv_hard_float
+     * is defined, so this would indicate a wrong full configuration
+     * (e.g. float assembly tests compiled in. At least flag this as an error.
+     */
+    assert(!"illegal instruction");
+#endif
 
     if (*(int*)tf->epc == *fssr)
       terminate(1); // FP test on non-FP hardware.  "succeed."
